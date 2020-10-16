@@ -20,3 +20,36 @@ def choose_connection(nodeIndex, nodeColor, nodesScore, prevNodesScore, adjMatri
     adjMatrix[preferedConnection][nodeIndex] = 1
     return(adjMatrix)
 
+def rank_choices(nodeColor, nodeIndex, nodesScore, prevNodesScore):
+    scoredNodes = []
+    nNodes = len(nodesScore)
+    if nodeColor == 'red':
+        for index in list(range(nNodes)):
+            currentScore = nodesScore[index]
+            nRounds = len(prevNodesScore[index]) + 1
+            avgScore = currentScore/nRounds #could also look at average over last 5 rounds or something 
+            
+            assignedScore = random.random() #random selection
+            scoredNodes.append((index, assignedScore))
+
+    elif nodeColor == 'green':
+        for index in list(range(nNodes)):
+            currentScore = nodesScore[index]
+            nRounds = len(prevNodesScore[index]) + 1
+            avgScore = currentScore/nRounds #could also look at average over last 5 rounds or something 
+            
+            assignedScore = random.random() #random selection
+            scoredNodes.append((index, assignedScore))
+
+    elif nodeColor == "blue":
+        for index in list(range(nNodes)):
+            currentScore = nodesScore[index]
+            nRounds = len(prevNodesScore[index]) + 1
+            avgScore = currentScore/nRounds #could also look at average over last 5 rounds or something 
+            
+            assignedScore = random.random() #random selection
+            scoredNodes.append((index, assignedScore))
+
+    scoredNodesRanked = sorted(scoredNodes, reverse=True, key=lambda score: score[1]) #citation: https://docs.python.org/3/howto/sorting.html
+    rankedChoices = [score[1] for score in scoredNodesRanked]
+    return(rankedChoices)
