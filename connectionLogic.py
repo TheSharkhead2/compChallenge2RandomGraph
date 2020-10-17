@@ -61,6 +61,8 @@ def rank_choices(nodeColor, nodeIndex, nodesScore, roundNumber):
             avgScore = currentScore/roundNumber #could also look at average over last 5 rounds or something 
             
             assignedScore = random.random() #random selection
+            if index == nodeIndex:
+                assignedScore = 0
             scoredNodes.append((index, assignedScore))
 
     elif nodeColor == 'green':
@@ -69,6 +71,8 @@ def rank_choices(nodeColor, nodeIndex, nodesScore, roundNumber):
             avgScore = currentScore/roundNumber #could also look at average over last 5 rounds or something 
             
             assignedScore = random.random() #random selection
+            if index == nodeIndex:
+                assignedScore = 0
             scoredNodes.append((index, assignedScore))
 
     elif nodeColor == "blue":
@@ -77,6 +81,8 @@ def rank_choices(nodeColor, nodeIndex, nodesScore, roundNumber):
             avgScore = currentScore/roundNumber #could also look at average over last 5 rounds or something 
             
             assignedScore = random.random() #random selection
+            if index == nodeIndex:
+                assignedScore = 0
             scoredNodes.append((index, assignedScore))
 
     scoredNodesRanked = sorted(scoredNodes, reverse=True, key=lambda score: score[1]) #citation: https://docs.python.org/3/howto/sorting.html
@@ -110,13 +116,17 @@ def create_connections(nodesColor, nodesScore, roundNumber, adjMatrix):
     preferenceAdjMatrix = np.zeros([nNodes, nNodes])
     for index, rankedChoices in zip(list(range(nNodes)), nodesRankedChoice):
         for conNodeIndex, rank in zip(rankedChoices, list(range(len(rankedChoices)))):
-
-            preferenceAdjMatrixValues[index][conNodeIndex] = rank + 1
-            preferenceAdjMatrix[index][conNodeIndex] = 1
+            if index != conNodeIndex:
+                preferenceAdjMatrixValues[index][conNodeIndex] = rank + 1
+                preferenceAdjMatrix[index][conNodeIndex] = 1
+            else: 
+                preferenceAdjMatrixValues[index][conNodeIndex] = 0
+                preferenceAdjMatrix[index][conNodeIndex] = 0
     
-    print(preferenceAdjMatrixValues)
+    # print(preferenceAdjMatrixValues)
     adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore)
 
+    testedEdges = []
     for rankCutoff in range(nNodes):
         rankCutoff += 1 
         preferenceAdjMatrixValuesCuttoff = np.copy(preferenceAdjMatrixValues) 
@@ -130,20 +140,31 @@ def create_connections(nodesColor, nodesScore, roundNumber, adjMatrix):
         walksLen2 = np.linalg.matrix_power(preferenceAdjMatrixCuttoff, 2)
         for pair, index in zip(np.diag(walksLen2), list(range(len(np.diag(walksLen2))))):
             if pair > 0:
-                print(pair) #for testing purposes 
-                print(index) #for testing purposes
-
                 testAdjMatrix = np.copy(adjMatrix)
-
                 for tempEdge, tempConIndex in zip(preferenceAdjMatrixCuttoff[index], list(range((len(preferenceAdjMatrixCuttoff[index]))))):
-                    if tempEdge == 1 and preferenceAdjMatrixCuttoff[tempConIndex][index] == 1:
-                        testAdjMatrix[index][tempConIndex] = 1 #here need to make sure to remove edge to other node that each is connected to 
-                        testAdjMatrix[tempConIndex][index] = 1
-                        break
+                    if (index, tempConIndex) not in testedEdges and (tempConIndex, index) not in testedEdges:
+                        if tempEdge == 1 and preferenceAdjMatrixCuttoff[tempConIndex][index] == 1:
+                            tempConIndex1 = None
+                            index1 = None
+                            for edge, oldEdgeIndex in zip(testAdjMatrix[index], list(range(len(testAdjMatrix[index])))):
+                                if edge == 1:
+                                    tempConIndex1 = oldEdgeIndex
+                                    testAdjMatrix[index][oldEdgeIndex] = 0 
+                            for edge, oldEdgeIndex in zip(testAdjMatrix[tempConIndex], list(range(len(testAdjMatrix[tempConIndex])))):
+                                if edge == 1:
+                                    index1 = oldEdgeIndex
+                                    testAdjMatrix[tempConIndex][oldEdgeIndex] = 0 
 
-                
-                
-                if average_rank_sum(testAdjMatrix, preferenceAdjMatrixValues) > average_rank_sum(adjMatrix, preferenceAdjMatrixValues):
-                    adjMatrix = testAdjMatrix
-
+                            testAdjMatrix[index][tempConIndex] = 1 #here need to make sure to remove edge to other node that each is connected to 
+                            testAdjMatrix[tempConIndex][index] = 1
+                            testAdjMatrix[index1][tempConIndex1] = 1
+                            testAdjMatrix[tempConIndex1][index1] = 1
+                            if average_rank_sum(testAdjMatrix, preferenceAdjMatrixValues) < average_rank_sum(adjMatrix, preferenceAdjMatrixValues):
+                                # print(str(average_rank_sum(adjMatrix, preferenceAdjMatrixValues)) + " > " + str(average_rank_sum(testAdjMatrix, preferenceAdjMatrixValues)))
+                                adjMatrix = np.copy(testAdjMatrix)
+                                
+                            else: 
+                                testAdjMatrix = np.copy(adjMatrix)
+                            testedEdges.append((index, tempConIndex))
+    return(adjMatrix)
 
