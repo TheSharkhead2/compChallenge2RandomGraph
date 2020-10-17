@@ -3,6 +3,7 @@ import numpy as np
 import networkx as nx #used this for help: https://www.python-course.eu/networkx.php & for coloring nodes: https://stackoverflow.com/questions/27030473/how-to-set-colors-for-nodes-in-networkx
 import matplotlib.pyplot as plt
 from connectionLogic import choose_connection
+from connectionLogic import create_connections
 
 payoffMatrix = np.array([[(3,3), (0,5)], [(5,0), (1,1)]])
 
@@ -48,13 +49,11 @@ def gen_node_list(numnodes, randomColor=False, pR=False, pB=False, pG=False):
                 nodeList.append('green')
     return(nodeList)
 
-def assignConnections(nodeList, adjMatrix, nodesScore):
+def assignConnections(nodeList, adjMatrix, nodesScore, roundNumber):
     adjMatrix = np.zeros([len(nodeList), len(nodeList)])
     originalAdjMatrix = adjMatrix
     index = 0
-    for node in nodeList:
-        adjMatrix = choose_connection(index, node, nodesScore, nodesScore, adjMatrix, originalAdjMatrix)
-        index += 1
+    adjMatrix = create_connections(nodeList, nodesScore, roundNumber, adjMatrix)
     return(adjMatrix)
 
 def node_move(node, index, nodesOppLastMove):
@@ -110,8 +109,8 @@ nNodes = 9 #half total nodes
 
 
 displayGraph = False
-nRounds = 100
-nGames = 100
+nRounds = 10
+nGames = 1
 
 averageScoreHistory = []
 
@@ -121,17 +120,19 @@ for game in range(nGames):
     adjMatrix = np.zeros([2*nNodes,2*nNodes])
     nodesOppLastMove = np.ones(2*nNodes)
     scoreHistory = []
-    adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore)
+    adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore, 1)
     if displayGraph:
         display_graph(nodesColor, adjMatrix)
         print(nodesScore)
+    roundNumber = 1
     for Round in range(nRounds):
         play_round(nodesColor, adjMatrix, nodesScore, nodesOppLastMove)
         scoreHistory.append(nodesScore)
-        adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore)
+        adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore, roundNumber)
         if displayGraph:
             display_graph(nodesColor, adjMatrix)
             print(nodesScore)
+        roundNumber += 1
 
     # print(scoreHistory)
     averageScoreHistory.append(analytics_averageScore(nodesColor, scoreHistory))
