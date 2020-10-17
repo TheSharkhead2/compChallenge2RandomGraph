@@ -2,9 +2,9 @@ import random
 import numpy as np
 import networkx as nx #used this for help: https://www.python-course.eu/networkx.php & for coloring nodes: https://stackoverflow.com/questions/27030473/how-to-set-colors-for-nodes-in-networkx
 import matplotlib.pyplot as plt
-from connectionLogic import choose_connection
 from connectionLogic import create_connections
 import progressbar #module: https://pypi.org/project/progressbar2/
+import pandas as pd 
 
 payoffMatrix = np.array([[(3,3), (0,5)], [(5,0), (1,1)]])
 
@@ -109,9 +109,10 @@ nNodes = 9 #half total nodes
 
 displayGraph = False
 nRounds = 100
-nGames = 10
+nGames = 3
 
 averageScoreHistory = []
+roundData = []
 
 with progressbar.ProgressBar(max_value=nGames) as bar:
     for game in range(nGames):
@@ -125,19 +126,21 @@ with progressbar.ProgressBar(max_value=nGames) as bar:
             display_graph(nodesColor, adjMatrix)
             print(nodesScore)
         roundNumber = 1
+        roundData.append(pd.DataFrame(data={"round" : [0], "red" : [0], "green" : [0], "blue" : [0], "rDiff" : [0], "gDiff" : [0], "bDiff" : [0]}))
         for Round in range(nRounds):
             play_round(nodesColor, adjMatrix, nodesScore, nodesOppLastMove)
             scoreHistory.append(nodesScore)
+            averageScoresThisRound = analytics_averageScore(nodesColor, scoreHistory)
+            roundData[game] = roundData[game].append({"round" : roundNumber, "red" : averageScoresThisRound[0], "green" : averageScoresThisRound[1], "blue" : averageScoresThisRound[2], "rDiff" : averageScoresThisRound[0] - roundData[game].at[roundNumber - 1, "red"], "gDiff" : averageScoresThisRound[1] - roundData[game].at[roundNumber - 1, "green"], "bDiff" : averageScoresThisRound[2] - roundData[game].at[roundNumber - 1, "blue"]}, ignore_index=True)
             adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore, roundNumber)
             if displayGraph:
                 display_graph(nodesColor, adjMatrix)
                 print(nodesScore)
             roundNumber += 1
-
         # print(scoreHistory)
         averageScoreHistory.append(analytics_averageScore(nodesColor, scoreHistory))
-        bar.update(game)
-
+        bar.update(game+1)
+print(roundData)
 redScore = 0
 greenScore = 0 
 blueScore = 0 
@@ -152,3 +155,11 @@ greenScore = greenScore/nGames
 blueScore = blueScore/nGames
 
 print("over {} games with {} rounds, red had on average {} points per game, green had {} points, and blue had {} points".format(nGames, nRounds, redScore, greenScore, blueScore))
+
+PlotAvgScore = plt
+PlotAvgScore.title("First Game Average Score Over Time")
+PlotAvgScore.plot(roundData[0]["round"], roundData[0]["red"], color="red", label="Average Red Score")
+PlotAvgScore.plot(roundData[0]["round"], roundData[0]["green"], color="green", label="Average Green Score")
+PlotAvgScore.plot(roundData[0]["round"], roundData[0]["blue"], color="blue", label="Average Blue Score")
+PlotAvgScore.legend()
+PlotAvgScore.show()
