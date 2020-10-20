@@ -52,7 +52,7 @@ def gen_node_list(numnodes, randomColor=False, pR=False, pB=False, pG=False):
 
 def assignConnections(nodeList, adjMatrix, nodesScore, roundNumber):
     adjMatrix = np.zeros([len(nodeList), len(nodeList)])
-    adjMatrix = create_connections(nodeList, nodesScore, roundNumber, adjMatrix)
+    adjMatrix = create_connections(nodeList, nodesScore, roundNumber, adjMatrix, rstrat='ran', gstrat='ran', bstrat='ran')
     return(adjMatrix)
 
 def node_move(node, index, nodesOppLastMove):
@@ -103,30 +103,31 @@ def analytics_averageScore(nodesColor, scoreHistory):
     # print("red nodes had an average score of: {}, green with: {}, blue with: {}".format(averageScores[0], averageScores[1], averageScores[2]))
     return(averageScores)
 
-nNodes = 9 #half total nodes
+nNodes = 15 #half total nodes
 
 
 
 displayGraph = False
 nRounds = 100
-nGames = 3
+nGames = 1
 
 averageScoreHistory = []
 roundData = []
 
-with progressbar.ProgressBar(max_value=nGames) as bar:
-    for game in range(nGames):
-        nodesColor = gen_node_list(nNodes)
-        nodesScore = np.zeros(2*nNodes)
-        adjMatrix = np.zeros([2*nNodes,2*nNodes])
-        nodesOppLastMove = np.ones(2*nNodes)
-        scoreHistory = []
-        adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore, 1)
-        if displayGraph:
-            display_graph(nodesColor, adjMatrix)
-            print(nodesScore)
-        roundNumber = 1
-        roundData.append(pd.DataFrame(data={"round" : [0], "red" : [0], "green" : [0], "blue" : [0], "rDiff" : [0], "gDiff" : [0], "bDiff" : [0]}))
+
+for game in range(nGames):
+    nodesColor = gen_node_list(nNodes)
+    nodesScore = np.zeros(2*nNodes)
+    adjMatrix = np.zeros([2*nNodes,2*nNodes])
+    nodesOppLastMove = np.ones(2*nNodes)
+    scoreHistory = []
+    adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore, 1)
+    if displayGraph:
+        display_graph(nodesColor, adjMatrix)
+        print(nodesScore)
+    roundNumber = 1
+    roundData.append(pd.DataFrame(data={"round" : [0], "red" : [0], "green" : [0], "blue" : [0], "rDiff" : [0], "gDiff" : [0], "bDiff" : [0]}))
+    with progressbar.ProgressBar(max_value=nRounds) as bar:
         for Round in range(nRounds):
             play_round(nodesColor, adjMatrix, nodesScore, nodesOppLastMove)
             scoreHistory.append(nodesScore)
@@ -137,9 +138,10 @@ with progressbar.ProgressBar(max_value=nGames) as bar:
                 display_graph(nodesColor, adjMatrix)
                 print(nodesScore)
             roundNumber += 1
-        # print(scoreHistory)
-        averageScoreHistory.append(analytics_averageScore(nodesColor, scoreHistory))
-        bar.update(game+1)
+            bar.update(Round)
+    # print(scoreHistory)
+    averageScoreHistory.append(analytics_averageScore(nodesColor, scoreHistory))
+
 print(roundData)
 redScore = 0
 greenScore = 0 
