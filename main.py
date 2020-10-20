@@ -52,7 +52,7 @@ def gen_node_list(numnodes, randomColor=False, pR=False, pB=False, pG=False):
 
 def assignConnections(nodeList, adjMatrix, nodesScore, roundNumber):
     adjMatrix = np.zeros([len(nodeList), len(nodeList)])
-    adjMatrix = create_connections(nodeList, nodesScore, roundNumber, adjMatrix, rstrat='ran', gstrat='ran', bstrat='ran')
+    adjMatrix = create_connections(nodeList, nodesScore, roundNumber, adjMatrix, rstrat='ran', gstrat='ran', bstrat='ran') #possible strats: ran --> random, hoscore --> higher total score is prefered, hprscore --> higher average score per round prefered, moscore --> median overall score prefered, mprscore --> median score per round prefered, loscore --> lower overall score prefered, lprscore --> lower score per turn prefered 
     return(adjMatrix)
 
 def node_move(node, index, nodesOppLastMove):
@@ -156,7 +156,7 @@ redScore = redScore/nGames
 greenScore = greenScore/nGames
 blueScore = blueScore/nGames
 
-print("over {} games with {} rounds, red had on average {} points per game, green had {} points, and blue had {} points".format(nGames, nRounds, redScore, greenScore, blueScore))
+print("over {} games with {} rounds, red had on average {} points, green had {} points, and blue had {} points".format(nGames, nRounds, redScore, greenScore, blueScore))
 
 PlotAvgScore = plt
 PlotAvgScore.title("First Game Average Score Over Time")
