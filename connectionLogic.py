@@ -186,7 +186,7 @@ def average_rank_sum(adjMatrix, preferenceAdjMatrixValues): #function sums the t
     
     return(sum(sumRanks)/len(sumRanks)) #return average
 
-def create_connections(nodesColor, nodesScore, roundNumber, adjMatrix, rstrat='ran', gstrat='ran', bstrat='ran'): #function to create pairings, attempting to optimize for ranked choices of each node 
+def create_connections(nodesColor, nodesScore, roundNumber, adjMatrix, rstrat='lprscore', gstrat='lprscore', bstrat='lprscore'): #function to create pairings, attempting to optimize for ranked choices of each node 
     nodesRankedChoice = []
     nNodes = len(nodesScore)
     
@@ -208,7 +208,11 @@ def create_connections(nodesColor, nodesScore, roundNumber, adjMatrix, rstrat='r
     adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore) #initially randomly assign all pairings
 
     testedEdges = []
+    lastRoundWithImprovement = 1
     for rankCutoff in range(nNodes): #look at network created by edges representing ranking of node to connected node (directed graph). Start only looking at ranks >= 1, then >= 2, etc...
+        if rankCutoff - 3 >= lastRoundWithImprovement: #break after 3 ranks with no improvement
+            # print("broke")
+            break
         rankCutoff += 1 
         preferenceAdjMatrixValuesCuttoff = np.copy(preferenceAdjMatrixValues) 
         preferenceAdjMatrixCuttoff = np.copy(preferenceAdjMatrix)
@@ -241,8 +245,9 @@ def create_connections(nodesColor, nodesScore, roundNumber, adjMatrix, rstrat='r
                             testAdjMatrix[index1][tempConIndex1] = 1
                             testAdjMatrix[tempConIndex1][index1] = 1
                             if average_rank_sum(testAdjMatrix, preferenceAdjMatrixValues) < average_rank_sum(adjMatrix, preferenceAdjMatrixValues): #if this change resulted in a benefit for the average "betterment" for each pairing, this becomes to new adjacency matrix, otherwise forget about it
-                                # print(str(average_rank_sum(adjMatrix, preferenceAdjMatrixValues)) + " > " + str(average_rank_sum(testAdjMatrix, preferenceAdjMatrixValues)))
+                                # print(str(rankCutoff) + ": " + str(average_rank_sum(adjMatrix, preferenceAdjMatrixValues)) + " > " + str(average_rank_sum(testAdjMatrix, preferenceAdjMatrixValues)))
                                 adjMatrix = np.copy(testAdjMatrix)
+                                lastRoundWithImprovement = rankCutoff
                                 
                             else: 
                                 testAdjMatrix = np.copy(adjMatrix)

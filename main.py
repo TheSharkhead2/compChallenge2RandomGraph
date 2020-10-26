@@ -25,7 +25,7 @@ def display_graph(nodesColor, adjMatrix):
     nx.draw(G, node_color=nodesColor)
     plt.show()
 
-def gen_node_list(numnodes, randomColor=False, pR=False, pB=False, pG=False):
+def gen_node_list(numnodes, randomColor=False, pR=False, pB=False, pG=False): #get list of node colors. Either equal amounts or based on probability of each node appearing
     nodeList = []
     if not randomColor: 
         if numnodes % 3 != 0:
@@ -50,12 +50,12 @@ def gen_node_list(numnodes, randomColor=False, pR=False, pB=False, pG=False):
                 nodeList.append('green')
     return(nodeList)
 
-def assignConnections(nodeList, adjMatrix, nodesScore, roundNumber):
+def assignConnections(nodeList, adjMatrix, nodesScore, roundNumber): #filler function to reference "create_connections" in other file. Leftover from earlier methods for generation of connections. 
     adjMatrix = np.zeros([len(nodeList), len(nodeList)])
     adjMatrix = create_connections(nodeList, nodesScore, roundNumber, adjMatrix, rstrat='ran', gstrat='ran', bstrat='ran') #possible strats: ran --> random, hoscore --> higher total score is prefered, hprscore --> higher average score per round prefered, moscore --> median overall score prefered, mprscore --> median score per round prefered, loscore --> lower overall score prefered, lprscore --> lower score per turn prefered 
     return(adjMatrix)
 
-def node_move(node, index, nodesOppLastMove):
+def node_move(node, index, nodesOppLastMove): #return move based on color
     if node == "green":
         move = nodesOppLastMove[index]
     elif node == "red":
@@ -64,7 +64,7 @@ def node_move(node, index, nodesOppLastMove):
         move = 0
     return int(move)
 
-def play_round(nodeList, adjMatrix, nodesScore, nodesOppLastMove):
+def play_round(nodeList, adjMatrix, nodesScore, nodesOppLastMove): #all nodes play games, get score
     nodesGone = []
     index = 0
     for node in nodeList:
@@ -89,7 +89,7 @@ def play_round(nodeList, adjMatrix, nodesScore, nodesOppLastMove):
             nodesGone.append(oppIndex)
         index += 1 
 
-def analytics_averageScore(nodesColor, scoreHistory):
+def analytics_averageScore(nodesColor, scoreHistory): #get average scores for different colors
     totalNodeScoreCount = [(0,0), (0,0), (0,0)] #first index red, then green, then blue... tuple, first index count second score
     for color, index in zip(nodesColor, list(range(len(nodesColor)))):
         if color == 'red':
@@ -103,19 +103,19 @@ def analytics_averageScore(nodesColor, scoreHistory):
     # print("red nodes had an average score of: {}, green with: {}, blue with: {}".format(averageScores[0], averageScores[1], averageScores[2]))
     return(averageScores)
 
-nNodes = 15 #half total nodes
+nNodes = 30 #half total nodes
 
 
 
 displayGraph = False
-nRounds = 100
+nRounds = 200
 nGames = 1
 
 averageScoreHistory = []
 roundData = []
 
 
-for game in range(nGames):
+for game in range(nGames): #game loop
     nodesColor = gen_node_list(nNodes)
     nodesScore = np.zeros(2*nNodes)
     adjMatrix = np.zeros([2*nNodes,2*nNodes])
@@ -127,13 +127,13 @@ for game in range(nGames):
         print(nodesScore)
     roundNumber = 1
     roundData.append(pd.DataFrame(data={"round" : [0], "red" : [0], "green" : [0], "blue" : [0], "rDiff" : [0], "gDiff" : [0], "bDiff" : [0]}))
-    with progressbar.ProgressBar(max_value=nRounds) as bar:
+    with progressbar.ProgressBar(max_value=nRounds) as bar: #play however many rounds and give progressbar updates
         for Round in range(nRounds):
-            play_round(nodesColor, adjMatrix, nodesScore, nodesOppLastMove)
-            scoreHistory.append(nodesScore)
+            play_round(nodesColor, adjMatrix, nodesScore, nodesOppLastMove) #every node plays game, scores recorded
+            scoreHistory.append(nodesScore) #record score history
             averageScoresThisRound = analytics_averageScore(nodesColor, scoreHistory)
             roundData[game] = roundData[game].append({"round" : roundNumber, "red" : averageScoresThisRound[0], "green" : averageScoresThisRound[1], "blue" : averageScoresThisRound[2], "rDiff" : averageScoresThisRound[0] - roundData[game].at[roundNumber - 1, "red"], "gDiff" : averageScoresThisRound[1] - roundData[game].at[roundNumber - 1, "green"], "bDiff" : averageScoresThisRound[2] - roundData[game].at[roundNumber - 1, "blue"]}, ignore_index=True)
-            adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore, roundNumber)
+            adjMatrix = assignConnections(nodesColor, adjMatrix, nodesScore, roundNumber) #reassign connections based on new preferences
             if displayGraph:
                 display_graph(nodesColor, adjMatrix)
                 print(nodesScore)
@@ -142,6 +142,8 @@ for game in range(nGames):
     # print(scoreHistory)
     averageScoreHistory.append(analytics_averageScore(nodesColor, scoreHistory))
 
+
+#graphing things below
 print(roundData)
 redScore = 0
 greenScore = 0 
